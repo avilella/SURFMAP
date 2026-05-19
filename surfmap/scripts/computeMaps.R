@@ -8,7 +8,7 @@ if (any(installed_packages == FALSE)) {
   install.packages(packages[!installed_packages])
 }
 suppressMessages(invisible(lapply(packages, library, character.only = TRUE)))
-options(warn = -1)
+options(warn=-1)
 
 ################## FUNCTIONS ##########################
 
@@ -59,8 +59,7 @@ image.scale <- function(z, zlim, col, scalename, breaks,
   if (is.null(ylim)) ylim <- YLIM
 
   plot(1, 1, t = "n", ylim = ylim, xlim = xlim, xaxt = xaxt, yaxt = yaxt,
-       xaxs = "i", yaxs = "i",
-       xlab = scalename, ylab = "", ...)
+       xaxs = "i", yaxs = "i", xlab = scalename, ylab = "", ...)
 
   for (i in seq_along(poly)) {
     if (horiz) polygon(poly[[i]], c(0, 0, 1, 1), col = col[i], border = NA)
@@ -71,53 +70,27 @@ image.scale <- function(z, zlim, col, scalename, breaks,
 ################## MAIN ##########################
 
 option_list <- list(
-  make_option(c("-i", "--input"), type="character", default=".",
-              help="path to matrix files or matrix file", metavar="character"),
-  make_option(c("-p", "--pdb"), type="character", default=".",
-              help="pdb id (used in title)", metavar="character"),
-  make_option(c("-c", "--coord"), type="character", default=NA,
-              help="File containing (phi, theta) coordinates to map", metavar="character"),
-  make_option(c("-l", "--reslist"), type="character", default=NA,
-              help="File containing coordinates of residues to map", metavar="character"),
-  make_option(c("-s", "--cellsize"), type="integer", default=5,
-              help="grid cell size (must divide 180)", metavar="integer"),
-  make_option(c("-P", "--projection"), type="character", default="sinusoidal",
-              help="projection type", metavar="character"),
-  make_option(c("-o", "--outdir"), type="character", default=".",
-              help="output directory", metavar="character"),
-  make_option(c("--suffix"), type="character", default="_smoothed_matrix.txt",
-              help="suffix removed from input to create output basename", metavar="character"),
-
-  make_option(c("--png"), action="store_true", default=FALSE,
-              help="output png instead of pdf"),
-
-  make_option(c("--margin_scale"), type="double", default=1.0,
-              help="scale factor applied to par(mar=...). Smaller => less whitespace", metavar="double"),
-
-  make_option(c("--no_scale_bar"), action="store_true", default=FALSE,
-              help="disable the color scale bar panel on the right"),
-
-  make_option(c("--electrostatics"), action="store_true", default=FALSE,
-              help="use electrostatics scale"),
-  make_option(c("--stickiness"), action="store_true", default=FALSE,
-              help="use stickiness scale"),
-  make_option(c("--kyte_doolittle"), action="store_true", default=FALSE,
-              help="use Kyte-Doolittle scale"),
-  make_option(c("--wimley_white"), action="store_true", default=FALSE,
-              help="use Wimley-White scale"),
-  make_option(c("--circular_variance"), action="store_true", default=FALSE,
-              help="use circular variance scale"),
-  make_option(c("--bfactor"), action="store_true", default=FALSE,
-              help="use bfactor scale"),
-  make_option(c("--discrete"), action="store_true", default=FALSE,
-              help="use discrete scale"),
-
-  make_option(c("--elec_max_value"), type="double", default=NULL,
-              help="max abs value for electrostatics scale", metavar="double"),
-  make_option(c("--bfactor_min_value"), type="double", default=NULL,
-              help="min value for bfactor scale", metavar="double"),
-  make_option(c("--bfactor_max_value"), type="double", default=NULL,
-              help="max value for bfactor scale", metavar="double")
+  make_option(c("-i", "--input"), type="character", default=".", help="path to matrix files or matrix file", metavar="character"),
+  make_option(c("-p", "--pdb"), type="character", default=".", help="pdb id (used in title)", metavar="character"),
+  make_option(c("-c", "--coord"), type="character", default=NA, help="File containing (phi, theta) coordinates to map", metavar="character"),
+  make_option(c("-l", "--reslist"), type="character", default=NA, help="File containing coordinates of residues to map", metavar="character"),
+  make_option(c("-s", "--cellsize"), type="integer", default=5, help="grid cell size (must divide 180)", metavar="integer"),
+  make_option(c("-P", "--projection"), type="character", default="sinusoidal", help="projection type", metavar="character"),
+  make_option(c("-o", "--outdir"), type="character", default=".", help="output directory", metavar="character"),
+  make_option(c("--suffix"), type="character", default="_smoothed_matrix.txt", help="suffix removed from input to create output basename", metavar="character"),
+  make_option(c("--png"), action="store_true", default=FALSE, help="output png instead of pdf"),
+  make_option(c("--margin_scale"), type="double", default=1.0, help="scale factor applied to par(mar=...). Smaller => less whitespace", metavar="double"),
+  make_option(c("--no_scale_bar"), action="store_true", default=FALSE, help="disable the color scale bar panel on the right"),
+  make_option(c("--electrostatics"), action="store_true", default=FALSE, help="use electrostatics scale"),
+  make_option(c("--stickiness"), action="store_true", default=FALSE, help="use stickiness scale"),
+  make_option(c("--kyte_doolittle"), action="store_true", default=FALSE, help="use Kyte-Doolittle scale"),
+  make_option(c("--wimley_white"), action="store_true", default=FALSE, help="use Wimley-White scale"),
+  make_option(c("--circular_variance"), action="store_true", default=FALSE, help="use circular variance scale"),
+  make_option(c("--bfactor"), action="store_true", default=FALSE, help="use bfactor scale"),
+  make_option(c("--discrete"), action="store_true", default=FALSE, help="use discrete scale"),
+  make_option(c("--elec_max_value"), type="double", default=NULL, help="max abs value for electrostatics scale", metavar="double"),
+  make_option(c("--bfactor_min_value"), type="double", default=NULL, help="min value for bfactor scale", metavar="double"),
+  make_option(c("--bfactor_max_value"), type="double", default=NULL, help="max value for bfactor scale", metavar="double")
 )
 
 opt_parser <- OptionParser(option_list = option_list)
@@ -129,15 +102,9 @@ if (length(margin_scale) != 1 || is.na(margin_scale) || margin_scale <= 0) {
 }
 
 show_scale_bar <- !(opt$no_scale_bar == TRUE)
-
-# Tight PNG mode: when no scale bar and margins are extremely small, produce an image with
-# no outer/inner padding so the PNG matches the map matrix area.
-# In this mode we size the PNG device in pixels to exactly match the grid aspect ratio.
 TIGHT_MARGIN_THRESHOLD <- 0.01
-# NOTE: tight_png is evaluated once; stepabs/stepord are constant for the run.
 tight_png <- isTRUE(opt$png) && !show_scale_bar && (margin_scale <= TIGHT_MARGIN_THRESHOLD)
 
-# Input matrix files
 if (file_test("-f", opt$input)) {
   files <- c(opt$input)
 } else if (file_test("-d", opt$input)) {
@@ -147,7 +114,6 @@ if (file_test("-f", opt$input)) {
   quit(status = 1)
 }
 
-# Grid
 width <- as.integer(opt$cellsize)
 if (180 %% width != 0) {
   cat("Error: cellsize must divide 180\n")
@@ -155,23 +121,18 @@ if (180 %% width != 0) {
 }
 stepabs <- 360 / width
 stepord <- 180 / width
-asp_map <- stepord / stepabs  # ~0.5
+asp_map <- stepord / stepabs
 
-# Output dir
 outdir <- file.path(opt$outdir, "maps")
 dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 
 for (f in files) {
-
   name_prefix <- gsub(opt$suffix, "", basename(f))
   pdf_filename <- file.path(outdir, paste0(name_prefix, "_map.pdf"))
 
   if (opt$png) {
     if (tight_png) {
-      # Use pixel sizing so the PNG bounds match the map grid (no top/bottom padding).
-      # Keep roughly the same horizontal resolution as the legacy 17.78cm@300dpi (~2100px).
       target_w_px <- 2100
-      # Round to a multiple of the grid width so cells map cleanly to pixels.
       px_per_cell <- max(1, floor(target_w_px / stepabs))
       w_px <- stepabs * px_per_cell
       h_px <- stepord * px_per_cell
@@ -183,27 +144,20 @@ for (f in files) {
     pdf(pdf_filename)
   }
 
-  # Reduce outer margins (device padding)
   par(oma = c(0, 0, 0, 0))
   if (tight_png) {
-    # No inner margins or axis expansion in tight mode
     par(mar = c(0, 0, 0, 0), xaxs = "i", yaxs = "i")
   }
 
   data_matrix <- read.table(f, fill = TRUE, header = TRUE, sep = "\t")
   data_matrix[is.na(data_matrix)] <- 0
-  val_matrix <- matrix(as.double(data_matrix[, 3]),
-                       ncol = stepabs, nrow = stepord, byrow = FALSE)
+  val_matrix <- matrix(as.double(data_matrix[, 3]), ncol = stepabs, nrow = stepord, byrow = FALSE)
 
   proj <- which(val_matrix != Inf)
-
-  # Defaults
   minval <- min(val_matrix[proj])
   maxval <- max(val_matrix[proj])
 
-  # Choose scale + palette
   if (opt$electrostatics) {
-
     if (is.null(opt$elec_max_value)) {
       minval <- min(val_matrix[proj])
       maxval <- max(val_matrix[proj])
@@ -211,13 +165,11 @@ for (f in files) {
       minval <- -abs(opt$elec_max_value)
       maxval <-  abs(opt$elec_max_value)
     }
-
     if (abs(minval) > abs(maxval)) {
       maxval <- abs(minval)
     } else {
       minval <- -abs(maxval)
     }
-
     rangev <- abs(minval - maxval)
     scale_main <- paste0("electrostatic\npotential")
     main_title <- paste0("electrostatic potential map\n", opt$pdb)
@@ -229,7 +181,6 @@ for (f in files) {
     colorScale <- colorRampPalette(c("red", "white", "blue"))(1000)
 
   } else if (opt$kyte_doolittle) {
-
     minval <- -4.5; maxval <- 4.5
     rangev <- abs(minval - maxval)
     scale_main <- "hydrophobicity\nKyte-Doolittle"
@@ -241,7 +192,6 @@ for (f in files) {
     colorScale <- colorRampPalette(c("cadetblue", "cadetblue3", "#faf4e0", "orange3", "sienna4"))(1000)
 
   } else if (opt$stickiness) {
-
     minval <- -1.273; maxval <- 1.273
     rangev <- abs(minval - maxval)
     scale_main <- "stickiness"
@@ -253,7 +203,6 @@ for (f in files) {
     colorScale <- colorRampPalette(c("royalblue3", "white", "darkgreen"))(1000)
 
   } else if (opt$circular_variance) {
-
     minval <- 0; maxval <- 1
     rangev <- 1
     scale_main <- "circular\nvariance"
@@ -263,7 +212,6 @@ for (f in files) {
     colorScale <- colorRampPalette(c("black", "white", "blue"))(1000)
 
   } else if (opt$bfactor) {
-
     minval <- min(val_matrix[proj]); maxval <- max(val_matrix[proj])
     if (!is.null(opt$bfactor_min_value)) minval <- opt$bfactor_min_value
     if (!is.null(opt$bfactor_max_value)) maxval <- opt$bfactor_max_value
@@ -287,14 +235,12 @@ for (f in files) {
     colorScale <- colorRampPalette(c("blue", "white", "red"))(1000)
   }
 
-  # Layout: 1 panel if no scale bar, else 2 panels (map + scale)
   if (show_scale_bar) {
     layout(matrix(c(1,2), nrow=1, ncol=2), widths=c(4,1), heights=c(1,1))
   } else {
     layout(matrix(1, nrow=1, ncol=1))
   }
 
-  # Main plot margins (skip in tight mode)
   if (!tight_png) {
     par(mar = c(14.4, 5, 9.3, 1.2) * margin_scale)
   }
@@ -307,18 +253,79 @@ for (f in files) {
     laby <- expression(paste("90 - ", theta))
   }
 
-  image.nan.better(t(val_matrix),
-                   col=colorScale,
-                   zlim=c(minval, maxval),
-                   outside.below.color='white',
-                   outside.above.color='gray90',
-                   na.color='white',
-                   frame.plot=!tight_png,
-                   axes=FALSE,
-                   xlab=labx,
-                   ylab=laby,
-                   asp=asp_map,
-                   cex.lab=1.5)
+  # Build target Matrix for tracing MAb tags perimeters
+  tag_matrix <- matrix(NA, nrow=stepord, ncol=stepabs)
+  if (!is.na(opt$reslist) && file.exists(opt$reslist)) {
+      res_data <- tryCatch(read.table(opt$reslist, fill=TRUE, header=FALSE, stringsAsFactors=FALSE), error=function(e) NULL)
+      if (!is.null(res_data) && ncol(res_data) >= 4 && any(grepl("CDR", res_data[,4], ignore.case=TRUE))) {
+          
+          target_residues <- paste(res_data[,3], res_data[,2], res_data[,1], sep="_")
+          target_tags <- res_data[,4]
+
+          tag_vec <- rep(NA, nrow(data_matrix))
+
+          for(i in 1:nrow(data_matrix)) {
+              if (!is.na(data_matrix$residues[i]) && data_matrix$residues[i] != "") {
+                  cell_res <- trimws(unlist(strsplit(as.character(data_matrix$residues[i]), ",")))
+                  matches <- cell_res[cell_res %in% target_residues]
+                  if (length(matches) > 0) {
+                      idx <- match(matches[1], target_residues)
+                      tag_vec[i] <- target_tags[idx]
+                  }
+              }
+          }
+          tag_matrix <- matrix(tag_vec, nrow=stepord, ncol=stepabs, byrow=FALSE)
+      }
+  }
+  t_tag_matrix <- t(tag_matrix)
+
+  image.nan.better(t(val_matrix), col=colorScale, zlim=c(minval, maxval), outside.below.color='white', outside.above.color='gray90', na.color='white', frame.plot=!tight_png, axes=FALSE, xlab=labx, ylab=laby, asp=asp_map, cex.lab=1.5)
+
+  # Draw perimeter borders for MAb tags
+  if (exists("t_tag_matrix") && any(!is.na(t_tag_matrix))) {
+      dx <- 1 / (stepabs - 1)
+      dy <- 1 / (stepord - 1)
+
+      get_color <- function(tag) {
+          tag <- toupper(tag)
+          if(tag == "CDR3H") return("darkred")
+          if(tag == "CDR2H") return("red")
+          if(tag == "CDR1H") return("lightcoral")
+          if(tag == "CDR3L") return("darkblue")
+          if(tag == "CDR2L") return("blue")
+          if(tag == "CDR1L") return("deepskyblue")
+          return("black")
+      }
+
+      for(i in 1:stepabs) {
+          for(j in 1:stepord) {
+              tag <- t_tag_matrix[i, j]
+              if(!is.na(tag)) {
+                  col <- get_color(tag)
+                  x_center <- (i - 1) * dx
+                  y_center <- (j - 1) * dy
+
+                  x_left <- x_center - dx/2
+                  x_right <- x_center + dx/2
+                  y_bottom <- y_center - dy/2
+                  y_top <- y_center + dy/2
+
+                  if(i == 1 || is.na(t_tag_matrix[i-1, j]) || t_tag_matrix[i-1, j] != tag) {
+                      segments(x_left, y_bottom, x_left, y_top, col=col, lwd=2.0)
+                  }
+                  if(i == stepabs || is.na(t_tag_matrix[i+1, j]) || t_tag_matrix[i+1, j] != tag) {
+                      segments(x_right, y_bottom, x_right, y_top, col=col, lwd=2.0)
+                  }
+                  if(j == 1 || is.na(t_tag_matrix[i, j-1]) || t_tag_matrix[i, j-1] != tag) {
+                      segments(x_left, y_bottom, x_right, y_bottom, col=col, lwd=2.0)
+                  }
+                  if(j == stepord || is.na(t_tag_matrix[i, j+1]) || t_tag_matrix[i, j+1] != tag) {
+                      segments(x_left, y_top, x_right, y_top, col=col, lwd=2.0)
+                  }
+              }
+          }
+      }
+  }
 
   if (!tight_png) {
     axis(1, at=c(0,0.25,0.5,0.75,1), labels=c(-180,-90,0,90,180), cex.axis=1.2)
@@ -326,7 +333,6 @@ for (f in files) {
     title(main = main_title, line = 1.5)
   }
 
-  # Optional scale bar
   if (show_scale_bar) {
     par(mar = c(15.5, 1.6, 10.5, 4.5) * margin_scale)
     image.scale(t(val_matrix), col=colorScale, breaks=colors, scalename=scale_main, horiz=FALSE, yaxt="n")
