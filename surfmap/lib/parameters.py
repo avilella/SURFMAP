@@ -117,6 +117,22 @@ def get_args():
         help="If chosen, a map in PNG format is computed instead of the default PDF."
     )
 
+
+    parser.add_argument(
+
+        "--margin-scale", required=False, type=float, default=1.0,
+
+        help="Scale factor applied to plot margins in generated maps (PNG/PDF). Smaller values reduce white space around the plot. Defaults to 1.0"
+
+    )
+    
+    parser.add_argument(
+        "--no-scale-bar",
+        action="store_true",
+        help="Disable the colour scale bar on the right side of the plot."
+    )
+    
+    
     parser.add_argument(
         "--keep",
         action="store_true",
@@ -289,6 +305,11 @@ class Parameters:
 
         self.nosmooth: bool = args.nosmooth
         self.png: bool = args.png
+        self.no_scale_bar: bool = bool(getattr(args, "no_scale_bar", False))
+        self.margin_scale: float = float(getattr(args, 'margin_scale', 1.0))
+        if self.margin_scale <= 0:
+            print('Error: --margin-scale must be > 0')
+            exit(1)
         self.keep: bool = args.keep
         self.docker: bool = args.docker
         
