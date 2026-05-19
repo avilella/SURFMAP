@@ -128,6 +128,13 @@ def compute_map(params: Parameters, matrix_file: str, property: str, reslist: st
     if params.png:
         cmd.append("--png")
         out_png = out_pdf.replace(".pdf", ".png")
+
+    # Optional: scale R plot margins to reduce whitespace
+    if getattr(params, 'margin_scale', 1.0) != 1.0:
+        cmd += ["--margin_scale", str(getattr(params, 'margin_scale'))]
+    # Optional: remove the scale bar panel on the right
+    if getattr(params, "no_scale_bar", False):
+        cmd.append("--no_scale_bar")
     if params.elec_max_value is not None:
         cmd += ["--elec_max_value", str(params.elec_max_value)]
     if params.bfactor_min_value is not None:
