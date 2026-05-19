@@ -43,7 +43,6 @@ def get_args():
         help="Type of projection. Accepted projection types are: flamsteed, mollweide, lambert. Defaults to flamsteed."
     )
 
-
     parser.add_argument(
         "-coords",
         default=None,
@@ -55,6 +54,14 @@ def get_args():
         type=str,
         default='',
         help="Path to a file containing a list of residues to map on the projection. Expected format has the following space/tab separated column values: chainid resid resname"
+    )
+
+    parser.add_argument(
+        "--mab-tagging",
+        required=False,
+        type=str,
+        default=None,
+        help="Highlight CDR regions (IMGT numbering). Format: CDR1, CDR2, CDR3, or combinations like CDR3H:CDR3L:CDR1H where H and L represent chain IDs."
     )
 
     parser.add_argument(
@@ -117,13 +124,9 @@ def get_args():
         help="If chosen, a map in PNG format is computed instead of the default PDF."
     )
 
-
     parser.add_argument(
-
         "--margin-scale", required=False, type=float, default=1.0,
-
         help="Scale factor applied to plot margins in generated maps (PNG/PDF). Smaller values reduce white space around the plot. Defaults to 1.0"
-
     )
     
     parser.add_argument(
@@ -131,7 +134,6 @@ def get_args():
         action="store_true",
         help="Disable the colour scale bar on the right side of the plot."
     )
-    
     
     parser.add_argument(
         "--keep",
@@ -177,38 +179,6 @@ def get_args():
 
 
 class Parameters:
-    """Class handler for parameters of surfmap 
-    
-    Attributes are:
-    - curdir: Union[str, Path]  # current working directory
-    - surftool_script: str  # path to binary _surfmap_tool 
-    - shell_script: str  # path to compute_shell.sh
-    - coords_script: str  # path to computeCoordList.sh
-    - matrix_script: str  # path to computeMatrices.sh
-    - map_script: str  # path to computeMaps.sh
-    - mat: str=None  # path to a given matrix file
-    - pdbarg: str = None  # path to a given PDB file
-    - pdb_id: str  # PDB stem name (e.g. '1g3n')
-    - pdbname: str  # name of PDB file with no path (e.g. '1g3n.pdb')
-    - proj: str  # name of the projection type
-    - ppttomap: # name of the property
-    - resfile: str  # residue filename to map, if given
-    - rad: float  # radius used for shell computation
-    - cellsize: str  # unit size of a grid cell
-    - elec_max_value: str  # Maximum absolute color value to be used for the electrostatics color scale definition (e.g. 6.3)
-    - bfactor_min_value: str  # Minimum bfactor value to be used for the bfactor color scale
-    - bfactor_max_value: str  # Maximum bfactor value to be used for the bfactor color scale
-    - coordstomap: Any = None  #
-    - nosmooth: bool  # True to have map not smoothed (for discrete values only)
-    - png: bool  # True to generate a PNG file of the map in addition to the usual PDF
-    - keep: bool  # True to keep intermediary files that are usually removed
-    - docker: bool  # True to run SURFMAP on a docker container
-    - outdir: Union[str, Path]  # path to the output directory
-    - pqr: str=None  # path to a PQR file used for electrostatics calculation. Defaults to None
-    - ff: str=CHARMM  # pdb2pqr force-field used for electrostatics calculation. One of the following: AMBER, CHARMM, PARSE, TYL06, PEOEPB, SWANSON. Defaults to CHARMM.
-    - verbose: int=2  # Verbose level of the console log. 0 for silence, 1 for debug level, 2 for info level. Defaults to 2.
-
-    """
     REQUIREMENTS = ["R", "awk", "apbs"]
 
     ALLOWED_PROPERTIES = ["all", "stickiness", "kyte_doolittle", "wimley_white", "electrostatics", "circular_variance", "circular_variance_atom", "bfactor", "binding_sites"]
@@ -239,7 +209,7 @@ class Parameters:
             self.mat: str = None
             self.pdbarg: str = args.pdb
             self._check_pdbarg()
-            self.pdb_id: str = Path(self.pdbarg).stem if not args.mat else Path(args.mat).stem
+            self.pdb_id: str = Path(self.pdbarg).stem if not getattr(args, 'mat', None) else Path(args.mat).stem
             self.pdbname: str = Path(self.pdbarg).name
 
         # define matrice if given in input
@@ -286,6 +256,9 @@ class Parameters:
         if self.resfile and not Path(self.resfile).exists():
             print("The residue file could not be found (arg -res). It seems that this file does not exist.\nThis could be due to a mistake in the path to the file.\nExiting now.")
             exit()
+            
+        # define mab tagging if any
+        self.mab_tagging: str = getattr(args, 'mab_tagging', None)
 
         # define radius in angström added to usual atomic radius (used for calculation solvent excluded surface)
         self.rad: float = args.rad
@@ -305,11 +278,13 @@ class Parameters:
 
         self.nosmooth: bool = args.nosmooth
         self.png: bool = args.png
+        
         self.no_scale_bar: bool = bool(getattr(args, "no_scale_bar", False))
         self.margin_scale: float = float(getattr(args, 'margin_scale', 1.0))
         if self.margin_scale <= 0:
             print('Error: --margin-scale must be > 0')
             exit(1)
+            
         self.keep: bool = args.keep
         self.docker: bool = args.docker
         
@@ -325,10 +300,6 @@ class Parameters:
             self.verbose = self.VERBOSE_MAP[1]
 
     def _check_surfmap_requirements(self):
-        """Check if requirements are satisfied (will exit if not).
-
-        Only consider APBS if 'electrostatics' is asked as a -tomap option argument.
-        """
         exe_not_found = []
         for requirement in self.REQUIREMENTS:
             if requirement == "apbs" and self.args.tomap != "electrostatics":
@@ -341,11 +312,9 @@ class Parameters:
             print(f"If you think that an executable is present on your system but is detected as missing, please make sure to make it accessible no matter the current directory. It can be done by setting your search path (export PATH=$PATH:/...)\n")
             exit()
 
-    
     def _check_docker_install(self):
         if not which("docker"):
             print(f"Error: docker has not been detected on your system. Please install it to use a pre-built image of SURFMAP.\n")
-
 
     def _check_mutually_exclusive_args(self, args):
         if not args.pdb and not args.mat:
@@ -387,7 +356,7 @@ class Parameters:
             self.outdir: Union[str, Path] = args.d.format(*names)
 
         Path(self.outdir).mkdir(parents=True, exist_ok=True)
-                
+        
     def get_log_parameters(self):
         return """
 Parameters used to compute the maps:
@@ -397,6 +366,7 @@ Parameters used to compute the maps:
 - PQR file: {}
 - Name of the property mapped (-ppttomap): {} 
 - Filename of residues to map (-resfile): {}
+- MAb tagging (--mab-tagging): {}
 - MSMS radius used for shell computation (-rad): {}
 - Unit size of the grid cell (-s): {}
 - Grid resolution: {}
@@ -414,6 +384,7 @@ Parameters used to compute the maps:
         self.pqr if self.pqr else "None",
         self.ppttomap if self.ppttomap != "all" else ", ".join(self.PROPERTIES["all"]),
         self.resfile if self.resfile else "None",
+        self.mab_tagging if self.mab_tagging else "None",
         self.rad,
         self.cellsize,
         f"{int(360 / self.cellsize)}*{int(180 / self.cellsize)}",
