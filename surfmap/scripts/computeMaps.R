@@ -297,11 +297,21 @@ for (f in files) {
           return("black")
       }
 
+      get_lwd <- function(tag) {
+          tag <- toupper(tag)
+          if(tag == "CDR3H" || tag == "CDR3L") return(3.5)
+          if(tag == "CDR2H" || tag == "CDR2L") return(2.5)
+          if(tag == "CDR1H" || tag == "CDR1L") return(1.5)
+          return(2.5)
+      }
+
       for(i in 1:stepabs) {
           for(j in 1:stepord) {
               tag <- t_tag_matrix[i, j]
               if(!is.na(tag)) {
                   col <- get_color(tag)
+                  lwd_val <- get_lwd(tag)
+                  
                   x_center <- (i - 1) * dx
                   y_center <- (j - 1) * dy
 
@@ -311,16 +321,16 @@ for (f in files) {
                   y_top <- y_center + dy/2
 
                   if(i == 1 || is.na(t_tag_matrix[i-1, j]) || t_tag_matrix[i-1, j] != tag) {
-                      segments(x_left, y_bottom, x_left, y_top, col=col, lwd=2.0)
+                      segments(x_left, y_bottom, x_left, y_top, col=col, lwd=lwd_val, lty=3)
                   }
                   if(i == stepabs || is.na(t_tag_matrix[i+1, j]) || t_tag_matrix[i+1, j] != tag) {
-                      segments(x_right, y_bottom, x_right, y_top, col=col, lwd=2.0)
+                      segments(x_right, y_bottom, x_right, y_top, col=col, lwd=lwd_val, lty=3)
                   }
                   if(j == 1 || is.na(t_tag_matrix[i, j-1]) || t_tag_matrix[i, j-1] != tag) {
-                      segments(x_left, y_bottom, x_right, y_bottom, col=col, lwd=2.0)
+                      segments(x_left, y_bottom, x_right, y_bottom, col=col, lwd=lwd_val, lty=3)
                   }
                   if(j == stepord || is.na(t_tag_matrix[i, j+1]) || t_tag_matrix[i, j+1] != tag) {
-                      segments(x_left, y_top, x_right, y_top, col=col, lwd=2.0)
+                      segments(x_left, y_top, x_right, y_top, col=col, lwd=lwd_val, lty=3)
                   }
               }
           }
