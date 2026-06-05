@@ -6,6 +6,7 @@ import shutil
 import subprocess
 from typing import Tuple, Union
 import re
+import json
 
 from surfmap import PATH_MSMS, __COPYRIGHT_FULL__
 from surfmap.lib.logs import get_logger
@@ -36,12 +37,12 @@ def generate_mab_tagging_resfile(pdb_file: Union[str, Path], mab_tagging: str, o
     }
     
     tags = [t.strip().upper() for t in mab_tagging.split(':')]
-    target_map = {} # mapping (chain_id, resid) -> original tag (e.g., 'CDR3H')
+    target_map = {} 
     
     for tag in tags:
         if tag.startswith("CDR"):
-            region = tag[:4] # 'CDR1', 'CDR2', 'CDR3'
-            chain_id = tag[4:] # e.g. 'H', 'L'
+            region = tag[:4] 
+            chain_id = tag[4:] 
             
             if region in imgt_regions:
                 if chain_id:
@@ -57,7 +58,7 @@ def generate_mab_tagging_resfile(pdb_file: Union[str, Path], mab_tagging: str, o
                 logger.warning(f"MAb Tagging: Unrecognized region '{region}' in tag '{tag}'. Ignored.")
         else:
             logger.warning(f"MAb Tagging: Unrecognized tag format '{tag}'. Expected format like CDR3H. Ignored.")
-            
+             
     resfile_path = Path(outdir) / f"{Path(pdb_file).stem}_mab_tagging.txt"
     found_count = 0
     
@@ -67,7 +68,6 @@ def generate_mab_tagging_resfile(pdb_file: Union[str, Path], mab_tagging: str, o
             chain_match_count = 0
             
             for res in dPDB[chain]["reslist"]:
-                # Matches integer part ignoring insertion codes (e.g. extracts 111 from '111A')
                 match = re.search(r'\d+', res)
                 if match:
                     resid_int = int(match.group())
@@ -101,6 +101,84 @@ def compute_coords_list(params: Parameters, coords_file: str, property: str) -> 
     return proc_status, out_file
 
 
+def generate_json_matrix(txt_path: str, pdb_path: str):
+    """
+    Parses a generated text matrix and maps contributing residues (if any) to their sequential numbering
+    1..N inside their respective chains, returning a JSON equivalent of the grid.
+    """
+    if not Path(txt_path).exists():
+        return
+    
+    json_path = txt_path.replace(".txt", ".json")
+    out_data = []
+    
+    # Safely convert R's NA/Inf strings to valid Python floats or None
+    def _safe_float(val_str):
+        v = val_str.strip().upper()
+        if v in ('INF', '-INF', 'NA', 'NAN', ''):
+            return None
+        try:
+            return float(val_str.strip())
+        except ValueError:
+            return None
+    
+    # Build mapping from chain and PDB resid (including insertion codes) -> sequential number
+    try:
+        dPDB = Structure.parsePDBMultiChains(str(pdb_path))
+        seq_map = {}
+        for chain in dPDB.get("chains", []):
+            seq_counter = 1
+            for res in dPDB[chain].get("reslist", []):
+                seq_map[(chain, res)] = seq_counter
+                seq_counter += 1
+    except Exception as e:
+        logger.warning(f"Could not parse PDB for JSON mapping: {e}")
+        seq_map = {}
+
+    try:
+        with open(txt_path, "r") as f:
+            lines = f.readlines()
+            if not lines:
+                return
+                
+            for line in lines[1:]: # skip header
+                parts = line.strip('\n').split('\t')
+                if len(parts) < 4:
+                    continue
+                absc, ord_val, val, residues = parts[0], parts[1], parts[2], parts[3]
+                
+                res_list = []
+                if residues != "NA" and residues.strip() != "":
+                    for r in residues.split(","):
+                        r = r.strip()
+                        if not r: continue
+                        r_parts = r.split("_")
+                        if len(r_parts) >= 3:
+                            resname = r_parts[0]
+                            resnum = r_parts[1]
+                            chain_id = r_parts[2]
+                            seq_num = seq_map.get((chain_id, resnum), None)
+                            
+                            res_list.append({
+                                "resname": resname,
+                                "pdb_resnum": resnum,
+                                "chain": chain_id,
+                                "seq_num": seq_num
+                            })
+                
+                out_data.append({
+                    "absc": _safe_float(absc),
+                    "ord": _safe_float(ord_val),
+                    "value": _safe_float(val),
+                    "residues": res_list
+                })
+                
+        with open(json_path, "w") as jf:
+            json.dump(out_data, jf, indent=2)
+    except Exception as e:
+        logger.warning(f"Failed to generate JSON for {txt_path}: {e}")
+
+
 def compute_matrix(params: Parameters, coords_file: str, property: str, suffix="_coord_list.txt") -> Tuple[int, str, str]:
     cmd = ["Rscript", params.matrix_script, "-i", coords_file, "-s", str(params.cellsize), "-P", str(params.proj), "-o", str(params.outdir), "--suffix", suffix, "--discrete"]
 
@@ -120,6 +198,11 @@ def compute_matrix(params: Parameters, coords_file: str, property: str, suffix="
     named_property = "bfactor" if property == "binding_sites" else property
     out_matrix_smoothed = str(Path(params.outdir) / "smoothed_matrices" / f"{Path(params.pdbarg).stem}_{named_property}_smoothed_matrix.txt")
     out_matrix = str(Path(params.outdir) / "matrices" / f"{Path(params.pdbarg).stem}_{named_property}_matrix.txt")
+
+    # Generate JSON structured equivalents of both matrices
+    if params.pdbarg and Path(params.pdbarg).exists():
+        generate_json_matrix(out_matrix, params.pdbarg)
+        generate_json_matrix(out_matrix_smoothed, params.pdbarg)
 
     return proc_status, out_matrix, out_matrix_smoothed        
 
